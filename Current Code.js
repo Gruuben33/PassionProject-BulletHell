@@ -11,18 +11,21 @@ function setup() {
 
 	playerSelectCalculations()
 	menuCalculations()
+	player1X = windowWidth / 2
+	player1Y = windowHeight / 2
+	playerInteractionSize = playerSize / 2
 }
 
 function draw() {
 	clear()
 	textSize(mainTextSize)
 	handleState()
+	// objectSpeed()
 }
 
 function mouseClicked() {
 	// Select 1 player
 	if (mouseX <= select1X + selectCircleR && mouseX >= select1X - selectCircleR && mouseY <= select1Y + selectCircleR && mouseY >= select1Y - selectCircleR && currentState == selectState) {
-		playerCount = 1
 		changeState(player1Play)
 	}
 
@@ -94,6 +97,10 @@ function handleState() {
 			break
 		case player1Play:
 			drawMenuButton()
+			updatePlayer1Variables()
+			drawPlayer1()
+			// player1Test()
+			player1Movement()
 			break
 		case player2Play:
 			drawMenuButton()
@@ -308,5 +315,78 @@ function drawSelectScreen() {
 	circle(select2X, select2Y, selectCircleD)
 	fill('black')
 	text('2 Players', select2X, selectTextY)
-	text(`The player count is ${playerCount}`, windowWidth / 2, windowHeight / 2)
+	text('Select the amount of players', windowWidth / 2, windowHeight / 20)
+}
+
+// Player 1 variables
+let player1X
+let player1Y
+let playerSize = 50
+let player1XSpeed = 0
+let player1YSpeed = 0
+let player1Speed = 5
+let playerInteractionSize
+let player1LeftSide
+let player1RightSide
+let player1BottomSide
+let player1topSide
+
+function drawPlayer1() {
+	fill('rgb(122,254,255)')
+	noStroke()
+	square(player1X, player1Y, playerSize)
+}
+
+// function player1Test() {
+// 	if (keyIsDown(38)) {
+// 		player1YSpeed = player1Speed
+// 	}
+// 	else {
+// 		player1YSpeed = 0
+// 	}
+// 	if (keyIsDown(40)) {
+// 		player1YSpeed = -player1Speed
+// 	}
+// 	else if (keyIsDown(40) == false) {
+// 		player1YSpeed = 0
+// 	}
+// }
+
+function player1Movement() {
+	// Keys: ↑ & ↓
+	if (keyIsDown(38) && keyIsDown(40)) {
+		player1YSpeed = 0
+	}
+	else if (keyIsDown(38) && player1TopSide > 0) {
+		player1YSpeed = player1Speed
+	}
+	 else if (keyIsDown(40) && player1BottomSide < windowHeight) {
+		 player1YSpeed = -player1Speed
+	 }
+	else {
+		player1YSpeed = 0
+	}
+	
+	// Keys: ← & →
+	if (keyIsDown(37) && keyIsDown(39)) {
+		player1XSpeed = 0
+	}
+	else if (keyIsDown(37) && player1LeftSide > 0) {
+		player1XSpeed = player1Speed
+	}
+	else if (keyIsDown(39) && player1RightSide < windowWidth) {
+		player1XSpeed = -player1Speed
+	}
+	else {
+		player1XSpeed = 0
+	}
+}
+
+function updatePlayer1Variables() {
+	player1X -= player1XSpeed
+	player1Y -= player1YSpeed
+	player1LeftSide = player1X - playerInteractionSize
+	player1RightSide = player1X + playerInteractionSize
+	player1BottomSide = player1Y + playerInteractionSize
+	player1TopSide = player1Y - playerInteractionSize
 }
