@@ -390,3 +390,8 @@ function updatePlayer1Variables() {
 	player1BottomSide = player1Y + playerInteractionSize
 	player1TopSide = player1Y - playerInteractionSize
 }
+
+// function objectSpeed() {
+// 	player1X -= player1XSpeed
+// 	player1Y -= player1YSpeed
+// }
