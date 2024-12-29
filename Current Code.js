@@ -8,6 +8,11 @@ let now
 let lastTimeScore = 0
 let millisecondsSinceLastTimeScore
 
+// Misc. functions
+function resetPlayers() {
+	player1Calculations()
+}
+
 function setup() {
 	createCanvas(windowWidth, windowHeight)
 	background('grey')
@@ -69,9 +74,14 @@ function mouseClicked() {
 		changeState(player2Play)
 	}
 
-	// Select retry in game over
+	// Select retry button in 'game over'
 	if (mouseX <= textX + retryButtonClickWidth && mouseX >= textX - retryButtonClickWidth && mouseY <= retryButtonY + retryButtonClickHeight && mouseY >= retryButtonY - retryButtonClickHeight && currentState == gameOverState) {
-		changeState(player1Play)
+		changeStateBackward()
+	}
+
+	// Select player select button in 'game over'
+	if (mouseX <= textX + playerSelectButtonClickWidth && mouseX >= textX - playerSelectButtonClickWidth && mouseY <= playerSelectButtonY + playerSelectButtonClickHeight && mouseY >= playerSelectButtonY - playerSelectButtonClickHeight && currentState == gameOverState) {
+		changeState(selectState)
 	}
 }
 
@@ -92,10 +102,12 @@ function changeState(newState) {
 	if (currentState == player1Play || currentState == player2Play) {
 		currentScore = 0
 	}
+	resetPlayers()
 }
 
 function changeStateBackward() {
 	currentState = previousState
+	resetPlayers()
 }
 
 function handleState() {
@@ -110,7 +122,7 @@ function handleState() {
 			break
 		case player1Play:
 			drawMenuButton()
-			drawPlayer1Score()
+			drawScore()
 			updatePlayer1Variables()
 			drawPlayer1()
 			player1Movement()
@@ -119,6 +131,12 @@ function handleState() {
 			break
 		case player2Play:
 			drawMenuButton()
+			drawScore()
+			updatePlayer1Variables()
+			drawPlayer1()
+			player1Movement()
+			updateTime()
+			gameOverTest()
 			break
 		case gameOverState:
 			drawMenuButton()
@@ -399,7 +417,7 @@ function updatePlayer1Variables() {
 	player1TopSide = player1Y - playerInteractionSize
 }
 
-function drawPlayer1Score() {
+function drawScore() {
 	noStroke()
 	fill('white')
 	textAlign(LEFT)
@@ -439,6 +457,8 @@ let playerSelectButtonHeight
 // Set mouse interaction size for buttons
 let retryButtonClickWidth
 let retryButtonClickHeight
+let playerSelectButtonClickWidth
+let playerSelectButtonClickHeight
 
 // Retry button text X Y && back to player select text X Y
 let retryTextY
@@ -467,6 +487,8 @@ function gameOverCalculations() {
 	// Set mouse interaction size for buttons
 	retryButtonClickWidth = retryButtonWidth / 2
 	retryButtonClickHeight = retryButtonHeight / 2
+	playerSelectButtonClickWidth = playerSelectButtonWidth / 2
+	playerSelectButtonClickHeight = playerSelectButtonHeight / 2
 }
 
 function gameOverDisplay() {
