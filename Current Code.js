@@ -1,26 +1,29 @@
 // Misc. variables
 let mainTextSize = 30
 let highScore = 33
+let newHighScore = false
 let lastScore = 71
+let currentScore = 0
+let now
+let lastTimeScore = 0
+let millisecondsSinceLastTimeScore
 
 function setup() {
 	createCanvas(windowWidth, windowHeight)
 	background('grey')
-	textAlign(CENTER)
 	rectMode(CENTER)
 
 	playerSelectCalculations()
 	menuCalculations()
-	player1X = windowWidth / 2
-	player1Y = windowHeight / 2
-	playerInteractionSize = playerSize / 2
+	player1Calculations()
+	gameOverCalculations()
 }
 
 function draw() {
 	clear()
+	textAlign(CENTER)
 	textSize(mainTextSize)
 	handleState()
-	// objectSpeed()
 }
 
 function mouseClicked() {
@@ -43,27 +46,32 @@ function mouseClicked() {
 		}
 	}
 
-	// Select projectile speed buttons
+	// Select projectile speed buttons in menu
 	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && currentState == menuState) {
 		projectileSpeedMultiplier += 1
 	} else if (mouseX <= menuMinusButtonX + menuBoardButtonClickSize && mouseX >= menuMinusButtonX - menuBoardButtonClickSize && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && projectileSpeedMultiplier > 1 && currentState == menuState) {
 		projectileSpeedMultiplier -= 1
 	}
 
-	// Select projectile size buttons
+	// Select projectile size buttons in menu
 	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && currentState == menuState) {
 		projectileSizeMultiplier += 1
 	} else if (mouseX <= menuMinusButtonX + menuBoardButtonClickSize && mouseX >= menuMinusButtonX - menuBoardButtonClickSize && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && projectileSizeMultiplier > 1 && currentState == menuState) {
 		projectileSizeMultiplier -= 1
 	}
 
-	// Select state via menu button
+	// Select state in menu
 	if (mouseX <= textColumn2 + menuBoardButtonClickSize && mouseX >= textColumn2 - menuBoardButtonClickSize && mouseY <= menuSelectPlayerButtonY + menuBoardButtonClickSize && mouseY >= menuSelectPlayerButtonY - menuBoardButtonClickSize && currentState == menuState) {
 		changeState(selectState)
 	} else if (mouseX <= menuSelect1PlayerButtonX + menuBoardButtonClickSize && mouseX >= menuSelect1PlayerButtonX - menuBoardButtonClickSize && mouseY <= menuSelect1PlayerButtonY + menuBoardButtonClickSize && mouseY >= menuSelect1PlayerButtonY - menuBoardButtonClickSize && currentState == menuState) {
 		changeState(player1Play)
 	} else if (mouseX <= menuSelect2PlayerButtonX + menuBoardButtonClickSize && mouseX >= menuSelect2PlayerButtonX - menuBoardButtonClickSize && mouseY <= menuSelect2PlayerButtonY + menuBoardButtonClickSize && mouseY >= menuSelect2PlayerButtonY - menuBoardButtonClickSize && currentState == menuState) {
 		changeState(player2Play)
+	}
+
+	// Select retry in game over
+	if (mouseX <= textX + retryButtonClickWidth && mouseX >= textX - retryButtonClickWidth && mouseY <= retryButtonY + retryButtonClickHeight && mouseY >= retryButtonY - retryButtonClickHeight && currentState == gameOverState) {
+		changeState(player1Play)
 	}
 }
 
@@ -72,6 +80,7 @@ let selectState = 0
 let menuState = 1
 let player1Play = 2
 let player2Play = 3
+let gameOverState = 4
 let currentState = selectState
 let previousState = selectState
 let newState
@@ -79,6 +88,10 @@ let newState
 function changeState(newState) {
 	previousState = currentState
 	currentState = newState
+	newHighScore = false
+	if (currentState == player1Play || currentState == player2Play) {
+		currentScore = 0
+	}
 }
 
 function changeStateBackward() {
@@ -97,13 +110,19 @@ function handleState() {
 			break
 		case player1Play:
 			drawMenuButton()
+			drawPlayer1Score()
 			updatePlayer1Variables()
 			drawPlayer1()
-			// player1Test()
 			player1Movement()
+			updateTime()
+			gameOverTest()
 			break
 		case player2Play:
 			drawMenuButton()
+			break
+		case gameOverState:
+			drawMenuButton()
+			gameOverDisplay()
 	}
 }
 
@@ -307,11 +326,11 @@ function playerSelectCalculations() {
 
 function drawSelectScreen() {
 	noStroke()
-	fill('rgb(122,254,255)')
+	fill('skyblue')
 	circle(select1X, select1Y, selectCircleD)
 	fill('black')
 	text('1 Player', select1X, selectTextY)
-	fill('rgb(122,254,255)')
+	fill('skyblue')
 	circle(select2X, select2Y, selectCircleD)
 	fill('black')
 	text('2 Players', select2X, selectTextY)
@@ -330,54 +349,43 @@ let player1LeftSide
 let player1RightSide
 let player1BottomSide
 let player1topSide
+let playerScoreX = 40
+let playerScoreY
+
+function player1Calculations() {
+	player1X = windowWidth / 2
+	player1Y = windowHeight / 2
+	playerInteractionSize = playerSize / 2
+	playerScoreY = windowHeight - 60
+	playerHighScoreY = windowHeight - 30
+}
 
 function drawPlayer1() {
-	fill('rgb(122,254,255)')
+	fill('skyblue')
 	noStroke()
 	square(player1X, player1Y, playerSize)
 }
-
-// function player1Test() {
-// 	if (keyIsDown(38)) {
-// 		player1YSpeed = player1Speed
-// 	}
-// 	else {
-// 		player1YSpeed = 0
-// 	}
-// 	if (keyIsDown(40)) {
-// 		player1YSpeed = -player1Speed
-// 	}
-// 	else if (keyIsDown(40) == false) {
-// 		player1YSpeed = 0
-// 	}
-// }
 
 function player1Movement() {
 	// Keys: ↑ & ↓
 	if (keyIsDown(38) && keyIsDown(40)) {
 		player1YSpeed = 0
-	}
-	else if (keyIsDown(38) && player1TopSide > 0) {
+	} else if (keyIsDown(38) && player1TopSide > 0) {
 		player1YSpeed = player1Speed
-	}
-	 else if (keyIsDown(40) && player1BottomSide < windowHeight) {
-		 player1YSpeed = -player1Speed
-	 }
-	else {
+	} else if (keyIsDown(40) && player1BottomSide < windowHeight) {
+		player1YSpeed = -player1Speed
+	} else {
 		player1YSpeed = 0
 	}
-	
+
 	// Keys: ← & →
 	if (keyIsDown(37) && keyIsDown(39)) {
 		player1XSpeed = 0
-	}
-	else if (keyIsDown(37) && player1LeftSide > 0) {
+	} else if (keyIsDown(37) && player1LeftSide > 0) {
 		player1XSpeed = player1Speed
-	}
-	else if (keyIsDown(39) && player1RightSide < windowWidth) {
+	} else if (keyIsDown(39) && player1RightSide < windowWidth) {
 		player1XSpeed = -player1Speed
-	}
-	else {
+	} else {
 		player1XSpeed = 0
 	}
 }
@@ -391,7 +399,100 @@ function updatePlayer1Variables() {
 	player1TopSide = player1Y - playerInteractionSize
 }
 
-// function objectSpeed() {
-// 	player1X -= player1XSpeed
-// 	player1Y -= player1YSpeed
-// }
+function drawPlayer1Score() {
+	noStroke()
+	fill('white')
+	textAlign(LEFT)
+	text(`Score: ${currentScore}`, playerScoreX, playerScoreY)
+	text(`High Score: ${highScore}`, playerScoreX, playerHighScoreY)
+}
+
+function gameOverTest() {
+	if (keyIsDown(32)) {
+		changeState(gameOverState)
+	}
+}
+
+function updateTime() {
+	now = millis()
+	millisecondsSinceLastTimeScore = now - lastTimeScore
+	if (millisecondsSinceLastTimeScore > 10) {
+		currentScore += 1
+		lastTimeScore = now
+	}
+}
+
+// Text positions (newHighScore X Y, yourScore X Y, yourHighScore X Y)
+let textX
+let newHighScoreTextY
+let scoreWasTextY
+let highScoreIsTextY
+
+// Retry button Y W H && Back to player select Y W H
+let retryButtonY
+let retryButtonWidth
+let retryButtonHeight
+let playerSelectButtonY
+let playerSelectButtonWidth
+let playerSelectButtonHeight
+
+// Set mouse interaction size for buttons
+let retryButtonClickWidth
+let retryButtonClickHeight
+
+// Retry button text X Y && back to player select text X Y
+let retryTextY
+let playerSelectTextY
+
+function gameOverCalculations() {
+
+	// Text positions (newHighScore X Y, yourScore X Y, yourHighScore X Y)
+	textX = windowWidth / 2
+	newHighScoreTextY = windowHeight / 5
+	scoreWasTextY = windowHeight / 3
+	highScoreTextIsY = windowHeight / 2 - mainTextSize
+
+	// Retry button Y W H && Back to player select Y W H
+	retryButtonY = windowHeight / 1.5 - mainTextSize * 2
+	retryButtonWidth = windowWidth / 10
+	retryButtonHeight = windowHeight / 13
+	playerSelectButtonY = windowHeight / 1.4 + mainTextSize * 2
+	playerSelectButtonWidth = windowWidth / 4
+	playerSelectButtonHeight = windowHeight / 13
+
+	// Retry button text X Y && back to player select text X Y
+	retryTextY = retryButtonY + mainTextSize / 2.5
+	playerSelectTextY = playerSelectButtonY + mainTextSize / 2.5
+
+	// Set mouse interaction size for buttons
+	retryButtonClickWidth = retryButtonWidth / 2
+	retryButtonClickHeight = retryButtonHeight / 2
+}
+
+function gameOverDisplay() {
+	noStroke()
+	fill('white')
+
+	// Check for high score
+	if (currentScore > highScore) {
+		highScore = currentScore
+		newHighScore = true
+	}
+	if (newHighScore == true) {
+		fill('lightgreen')
+		text('New High Score!', textX, newHighScoreTextY)
+	} else if (newHighScore == false) {
+		fill('white')
+	}
+
+	// Tell you your score
+	text(`Your Score was ${currentScore}`, textX, scoreWasTextY)
+	text(`Your High Score is ${highScore}`, textX, highScoreTextIsY)
+
+	// Retry and player select buttons w/ text
+	rect(textX, retryButtonY, retryButtonWidth, retryButtonHeight)
+	rect(textX, playerSelectButtonY, playerSelectButtonWidth, playerSelectButtonHeight)
+	fill('black')
+	text('Retry', textX, retryTextY)
+	text('Back to Player Select', textX, playerSelectTextY)
+}
