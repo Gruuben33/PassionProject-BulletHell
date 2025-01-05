@@ -13,6 +13,12 @@ function resetPlayers() {
 	player1Calculations()
 }
 
+function resetScore() {
+	if (currentState == player1Play || currentState == player2Play) {
+		currentScore = 0
+	}
+}
+
 function setup() {
 	createCanvas(windowWidth, windowHeight)
 	background('grey')
@@ -99,15 +105,14 @@ function changeState(newState) {
 	previousState = currentState
 	currentState = newState
 	newHighScore = false
-	if (currentState == player1Play || currentState == player2Play) {
-		currentScore = 0
-	}
 	resetPlayers()
+	resetScore()
 }
 
 function changeStateBackward() {
 	currentState = previousState
 	resetPlayers()
+	resetScore()
 }
 
 function handleState() {
@@ -125,7 +130,7 @@ function handleState() {
 			drawScore()
 			updatePlayer1Variables()
 			drawPlayer1()
-			player1Movement()
+			player1Movement1()
 			updateTime()
 			gameOverTest()
 			break
@@ -384,27 +389,26 @@ function drawPlayer1() {
 	square(player1X, player1Y, playerSize)
 }
 
-function player1Movement() {
+function player1Movement1() {
 	// Keys: ↑ & ↓
-	if (keyIsDown(38) && keyIsDown(40)) {
-		player1YSpeed = 0
-	} else if (keyIsDown(38) && player1TopSide > 0) {
-		player1YSpeed = player1Speed
-	} else if (keyIsDown(40) && player1BottomSide < windowHeight) {
-		player1YSpeed = -player1Speed
-	} else {
+	if (player1YSpeed != 0) {
 		player1YSpeed = 0
 	}
-
+	if (keyIsDown(38) && player1TopSide > 0) {
+		player1YSpeed += player1Speed
+	}
+	if (keyIsDown(40) && player1BottomSide < windowHeight) {
+		player1YSpeed += -player1Speed
+	}
 	// Keys: ← & →
-	if (keyIsDown(37) && keyIsDown(39)) {
+	if (player1XSpeed != 0) {
 		player1XSpeed = 0
-	} else if (keyIsDown(37) && player1LeftSide > 0) {
-		player1XSpeed = player1Speed
-	} else if (keyIsDown(39) && player1RightSide < windowWidth) {
-		player1XSpeed = -player1Speed
-	} else {
-		player1XSpeed = 0
+	}
+	if (keyIsDown(37) && player1LeftSide > 0) {
+		player1XSpeed += 5
+	}
+	if (keyIsDown(39) && player1RightSide < windowWidth) {
+		player1XSpeed += -5
 	}
 }
 
@@ -465,7 +469,6 @@ let retryTextY
 let playerSelectTextY
 
 function gameOverCalculations() {
-
 	// Text positions (newHighScore X Y, yourScore X Y, yourHighScore X Y)
 	textX = windowWidth / 2
 	newHighScoreTextY = windowHeight / 5
