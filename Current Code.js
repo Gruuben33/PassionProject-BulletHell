@@ -1,12 +1,13 @@
 // Misc. variables
 let mainTextSize = 30
-let highScore = 33
+let highScore = 0
 let newHighScore = false
-let lastScore = 71
+let lastScore = 0
 let currentScore = 0
 let now
 let lastTimeScore = 0
 let millisecondsSinceLastTimeScore
+let player1Lives = 3
 
 // Misc. functions
 function resetPlayers() {
@@ -14,9 +15,7 @@ function resetPlayers() {
 }
 
 function resetScore() {
-	if (currentState == player1Play || currentState == player2Play) {
 		currentScore = 0
-	}
 }
 
 function setup() {
@@ -82,7 +81,7 @@ function mouseClicked() {
 
 	// Select retry button in 'game over'
 	if (mouseX <= textX + retryButtonClickWidth && mouseX >= textX - retryButtonClickWidth && mouseY <= retryButtonY + retryButtonClickHeight && mouseY >= retryButtonY - retryButtonClickHeight && currentState == gameOverState) {
-		changeStateBackward()
+		changeState(player1Play)
 	}
 
 	// Select player select button in 'game over'
@@ -100,19 +99,30 @@ let gameOverState = 4
 let currentState = selectState
 let previousState = selectState
 let newState
+let pause = false
 
 function changeState(newState) {
 	previousState = currentState
 	currentState = newState
-	newHighScore = false
-	resetPlayers()
-	resetScore()
+	if (newState == menuState) {
+		pause = true
+	} 
+	else if (newState != menuState){
+		pause = false
+		resetPlayers()
+		resetScore()
+		newHighScore = false
+	}
 }
 
 function changeStateBackward() {
 	currentState = previousState
-	resetPlayers()
-	resetScore()
+	if (pause == true) {
+		pause = false
+	} else {
+		resetPlayers()
+		resetScore()
+	}
 }
 
 function handleState() {
@@ -127,16 +137,16 @@ function handleState() {
 			break
 		case player1Play:
 			drawMenuButton()
-			drawScore()
+			drawPlayer1Display()
 			updatePlayer1Variables()
 			drawPlayer1()
-			player1Movement1()
+			player1Movement()
 			updateTime()
 			gameOverTest()
 			break
 		case player2Play:
 			drawMenuButton()
-			drawScore()
+			drawPlayer1Display()
 			updatePlayer1Variables()
 			drawPlayer1()
 			player1Movement()
@@ -374,6 +384,8 @@ let player1BottomSide
 let player1topSide
 let playerScoreX = 40
 let playerScoreY
+let playerLivesX
+let player1LivesY
 
 function player1Calculations() {
 	player1X = windowWidth / 2
@@ -381,6 +393,8 @@ function player1Calculations() {
 	playerInteractionSize = playerSize / 2
 	playerScoreY = windowHeight - 60
 	playerHighScoreY = windowHeight - 30
+	playerLivesX = windowWidth - 40
+	player1LivesY = windowHeight / 15
 }
 
 function drawPlayer1() {
@@ -389,7 +403,7 @@ function drawPlayer1() {
 	square(player1X, player1Y, playerSize)
 }
 
-function player1Movement1() {
+function player1Movement() {
 	// Keys: ↑ & ↓
 	if (player1YSpeed != 0) {
 		player1YSpeed = 0
@@ -419,14 +433,17 @@ function updatePlayer1Variables() {
 	player1RightSide = player1X + playerInteractionSize
 	player1BottomSide = player1Y + playerInteractionSize
 	player1TopSide = player1Y - playerInteractionSize
+	lastScore = currentScore
 }
 
-function drawScore() {
+function drawPlayer1Display() {
 	noStroke()
 	fill('white')
 	textAlign(LEFT)
 	text(`Score: ${currentScore}`, playerScoreX, playerScoreY)
 	text(`High Score: ${highScore}`, playerScoreX, playerHighScoreY)
+	textAlign(RIGHT)
+	text(`P1 Lives: ${player1Lives}`, playerLivesX, player1LivesY)
 }
 
 function gameOverTest() {
@@ -499,8 +516,8 @@ function gameOverDisplay() {
 	fill('white')
 
 	// Check for high score
-	if (currentScore > highScore) {
-		highScore = currentScore
+	if (lastScore > highScore) {
+		highScore = lastScore
 		newHighScore = true
 	}
 	if (newHighScore == true) {
@@ -511,7 +528,7 @@ function gameOverDisplay() {
 	}
 
 	// Tell you your score
-	text(`Your Score was ${currentScore}`, textX, scoreWasTextY)
+	text(`Your Score was ${lastScore}`, textX, scoreWasTextY)
 	text(`Your High Score is ${highScore}`, textX, highScoreTextIsY)
 
 	// Retry and player select buttons w/ text
