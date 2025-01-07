@@ -552,20 +552,31 @@ let lastSpawnTime = 0;
 
 class MovingShape {
   constructor() {
-    // Random initial position
-    this.x = random(windowWidth);
-    this.y = random(windowHeight);
-    
-    // Random speed and direction
+    // Randomly decide where the shape should appear (edge of the screen)
+    const edgeChoice = Math.floor(Math.random() * 4); // Random number between 0 and 3
+    if (edgeChoice === 0) {
+      // Spawn on the left edge
+      this.x = 0;
+      this.y = random(0, windowHeight); // Random y position along the left edge
+    } else if (edgeChoice === 1) {
+      // Spawn on the right edge
+      this.x = windowWidth;
+      this.y = random(0, windowHeight); // Random y position along the right edge
+    } else if (edgeChoice === 2) {
+      // Spawn on the top edge
+      this.x = random(0, windowWidth); // Random x position along the top edge
+      this.y = 0;
+    } else {
+      // Spawn on the bottom edge
+      this.x = random(0, windowWidth); // Random x position along the bottom edge
+      this.y = windowHeight;
+    }
     this.velocity = createVector(random(-2, 2), random(-2, 2));
     this.size = random(30, 60); // Random size between 30 and 60
-    
-    // Random color for each shape
     this.color = color(random(255), random(255), random(255));
   }
   
   update() {
-    // Move the shape by its velocity
     this.x += this.velocity.x;
     this.y += this.velocity.y;
     
@@ -586,8 +597,9 @@ class MovingShape {
 
 function updateShapes() {
   let now = millis();
+	let millisecondsSinceLastTimeSpawn = now - lastSpawnTime
   // Spawn a new shape at random intervals
-  if (now - lastSpawnTime > spawnRate) {
+  if (millisecondsSinceLastTimeSpawn > spawnRate) {
     movingShapes.push(new MovingShape());
     lastSpawnTime = now;
   }
