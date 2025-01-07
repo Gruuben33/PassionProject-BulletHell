@@ -112,6 +112,8 @@ function changeState(newState) {
 		resetPlayers()
 		resetScore()
 		newHighScore = false
+		movingShapes = []
+		lastSpawnTime = 0
 	}
 }
 
@@ -122,6 +124,8 @@ function changeStateBackward() {
 	} else {
 		resetPlayers()
 		resetScore()
+		movingShapes = []
+		lastTimeSpawn = 0
 	}
 }
 
@@ -143,6 +147,7 @@ function handleState() {
 			player1Movement()
 			updateTime()
 			gameOverTest()
+			updateShapes()
 			break
 		case player2Play:
 			drawMenuButton()
@@ -152,6 +157,7 @@ function handleState() {
 			player1Movement()
 			updateTime()
 			gameOverTest()
+			updateShapes()
 			break
 		case gameOverState:
 			drawMenuButton()
@@ -537,4 +543,62 @@ function gameOverDisplay() {
 	fill('black')
 	text('Retry', textX, retryTextY)
 	text('Back to Player Select', textX, playerSelectTextY)
+}
+
+// class spawning variables
+let movingShapes = []; // Array to hold all the shapes
+let spawnRate = 60; // Frames between spawning new shapes (1 shape every 60 frames)
+let lastSpawnTime = 0;
+
+class MovingShape {
+  constructor() {
+    // Random initial position
+    this.x = random(windowWidth);
+    this.y = random(windowHeight);
+    
+    // Random speed and direction
+    this.velocity = createVector(random(-2, 2), random(-2, 2));
+    this.size = random(30, 60); // Random size between 30 and 60
+    
+    // Random color for each shape
+    this.color = color(random(255), random(255), random(255));
+  }
+  
+  update() {
+    // Move the shape by its velocity
+    this.x += this.velocity.x;
+    this.y += this.velocity.y;
+    
+    // If the shape goes off-screen, we remove it later
+    if (this.x < 0 || this.x > windowWidth || this.y < 0 || this.y > windowHeight) {
+      return true; // Indicates this shape should be removed
+    }
+    return false;
+  }
+  
+  display() {
+    // Draw the shape with its color
+    fill(this.color);
+    noStroke();
+    ellipse(this.x, this.y, this.size, this.size);
+  }
+}
+
+function updateShapes() {
+  let now = millis();
+  // Spawn a new shape at random intervals
+  if (now - lastSpawnTime > spawnRate) {
+    movingShapes.push(new MovingShape());
+    lastSpawnTime = now;
+  }
+
+  // Update and display the shapes, removing those that go off-screen
+  for (let i = movingShapes.length - 1; i >= 0; i--) {
+    let shape = movingShapes[i];
+    if (shape.update()) {
+      movingShapes.splice(i, 1); // Remove the shape if it goes off-screen
+    } else {
+      shape.display();
+    }
+  }
 }
