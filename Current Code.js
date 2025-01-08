@@ -140,24 +140,24 @@ function handleState() {
 			drawMenuScreen()
 			break
 		case player1Play:
-			drawMenuButton()
-			drawPlayer1Display()
 			updatePlayer1Variables()
-			drawPlayer1()
 			player1Movement()
 			updateTime()
 			gameOverTest()
 			updateShapes()
+			drawPlayer1Display()
+			drawPlayer1()
+			drawMenuButton()
 			break
 		case player2Play:
-			drawMenuButton()
-			drawPlayer1Display()
 			updatePlayer1Variables()
-			drawPlayer1()
 			player1Movement()
 			updateTime()
 			gameOverTest()
 			updateShapes()
+			drawPlayer1Display()
+			drawPlayer1()
+			drawMenuButton()
 			break
 		case gameOverState:
 			drawMenuButton()
@@ -218,8 +218,8 @@ let menuSelect1PlayerTextY
 let menuSelect2PlayerTextY
 
 // Menu screen options
-let projectileSpeedMultiplier = 1
-let projectileSizeMultiplier = 1
+let projectileSpeedMultiplier = 5
+let projectileSizeMultiplier = 5
 
 function menuCalculations() {
 	// Menu screen positions
@@ -546,71 +546,94 @@ function gameOverDisplay() {
 }
 
 // class spawning variables
-let movingShapes = []; // Array to hold all the shapes
-let spawnRate = 60; // Frames between spawning new shapes (1 shape every 60 frames)
-let lastSpawnTime = 0;
+let movingShapes = [] // Array to hold all the shapes
+let spawnRate = 60 // Frames between spawning new shapes (1 shape every 60 frames)
+let lastSpawnTime = 0
+let projectileSize = 20
 
 class MovingShape {
   constructor() {
     // Randomly decide where the shape should appear (edge of the screen)
-    const edgeChoice = Math.floor(Math.random() * 4); // Random number between 0 and 3
+    const edgeChoice = Math.floor(Math.random() * 4) // Random number between 0 and 3
     if (edgeChoice === 0) {
       // Spawn on the left edge
-      this.x = 0;
+      this.x = 0
       this.y = random(0, windowHeight); // Random y position along the left edge
     } else if (edgeChoice === 1) {
       // Spawn on the right edge
-      this.x = windowWidth;
-      this.y = random(0, windowHeight); // Random y position along the right edge
+      this.x = windowWidth
+      this.y = random(0, windowHeight) // Random y position along the right edge
     } else if (edgeChoice === 2) {
       // Spawn on the top edge
-      this.x = random(0, windowWidth); // Random x position along the top edge
-      this.y = 0;
+      this.x = random(0, windowWidth) // Random x position along the top edge
+      this.y = 0
     } else {
       // Spawn on the bottom edge
-      this.x = random(0, windowWidth); // Random x position along the bottom edge
-      this.y = windowHeight;
+      this.x = random(0, windowWidth) // Random x position along the bottom edge
+      this.y = windowHeight
     }
-    this.velocity = createVector(random(-2, 2), random(-2, 2));
-    this.size = random(30, 60); // Random size between 30 and 60
-    this.color = color(random(255), random(255), random(255));
+		
+		// Define the center of the screen
+    this.centerX = windowWidth / 2
+    this.centerY = windowHeight / 2
+    
+    // Define the radius of the circle within which the shape will move
+    this.targetRadius = 200 // You can change this value to control the size of the circular range
+    
+    // Randomly choose a target position within the circle around the center
+    let angle = random(TWO_PI) // Random angle between 0 and 2*PI
+    let radius = random(this.targetRadius) // Random radius within the circle's range
+    
+    this.targetX = this.centerX + cos(angle) * radius
+    this.targetY = this.centerY + sin(angle) * radius
+
+    // Define speed of the shape (adjustable)
+    this.speed = 2
+    
+    // Calculate the initial angle towards the target position
+    this.angle = atan2(this.targetY - this.centerY, this.targetX - this.centerX)
+		
+    this.size = projectileSize * projectileSizeMultiplier
+    this.color = color(random(255), random(255), random(255))
   }
   
   update() {
-    this.x += this.velocity.x;
-    this.y += this.velocity.y;
+    // Update position based on the angle
+    this.x += this.speed * cos(this.angle);
+    this.y += this.speed * sin(this.angle);
     
     // If the shape goes off-screen, we remove it later
     if (this.x < 0 || this.x > windowWidth || this.y < 0 || this.y > windowHeight) {
-      return true; // Indicates this shape should be removed
+      return true // Indicates this shape should be removed
     }
-    return false;
+    return false
   }
   
   display() {
     // Draw the shape with its color
-    fill(this.color);
-    noStroke();
-    ellipse(this.x, this.y, this.size, this.size);
+    fill(this.color)
+    noStroke()
+    ellipse(this.x, this.y, this.size, this.size)
   }
 }
 
 function updateShapes() {
-  let now = millis();
+  let now = millis()
 	let millisecondsSinceLastTimeSpawn = now - lastSpawnTime
   // Spawn a new shape at random intervals
   if (millisecondsSinceLastTimeSpawn > spawnRate) {
-    movingShapes.push(new MovingShape());
-    lastSpawnTime = now;
+    movingShapes.push(new MovingShape())
+    lastSpawnTime = now
   }
 
   // Update and display the shapes, removing those that go off-screen
-  for (let i = movingShapes.length - 1; i >= 0; i--) {
-    let shape = movingShapes[i];
+  for (let i = 0; i < movingShapes.length; i++) {
+		movingShapes[i].update()
+    let shape = movingShapes[i]
     if (shape.update()) {
-      movingShapes.splice(i, 1); // Remove the shape if it goes off-screen
+      movingShapes.splice(i, 1) // Remove the shape if it goes off-screen
     } else {
-      shape.display();
+      shape.display()
     }
   }
 }
