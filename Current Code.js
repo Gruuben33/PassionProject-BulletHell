@@ -649,3 +649,5 @@ function updateShapes() {
     }
   }
 }
+
+I would like the projectiles in this code to be limited, I want an array with a set number of objects. I only want an object to be able to spawn if there is at least one object that left the screen.
