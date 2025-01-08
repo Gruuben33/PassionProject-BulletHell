@@ -278,13 +278,13 @@ function menuCalculations() {
 }
 
 function drawMenuButton() {
-	noFill()
+	fill('black')
 	stroke('white')
 	strokeWeight(5)
+	square(menuButtonX, menuButtonY, menuButtonSize)
 	line(point1X, line1Y, point2X, line1Y)
 	line(point1X, line2Y, point2X, line2Y)
 	line(point1X, line3Y, point2X, line3Y)
-	square(menuButtonX, menuButtonY, menuButtonSize)
 }
 
 function drawMenuScreen() {
@@ -546,30 +546,30 @@ function gameOverDisplay() {
 }
 
 // class spawning variables
-let movingShapes = [] // Array to hold all the shapes
+let projectiles = [] // Array to hold all the shapes
 let spawnRate = 60 // Frames between spawning new shapes (1 shape every 60 frames)
-let lastSpawnTime = 0
+let lastTimeSpawn = 0
 let projectileSize = 20
 
-class MovingShape {
+class projectile {
   constructor() {
     // Randomly decide where the shape should appear (edge of the screen)
     const edgeChoice = Math.floor(Math.random() * 4) // Random number between 0 and 3
-    if (edgeChoice === 0) {
+    if (edgeChoice == 0) {
       // Spawn on the left edge
       this.x = 0
-      this.y = random(0, windowHeight); // Random y position along the left edge
-    } else if (edgeChoice === 1) {
+      this.y = random(0, windowHeight)
+    } else if (edgeChoice == 1) {
       // Spawn on the right edge
       this.x = windowWidth
-      this.y = random(0, windowHeight) // Random y position along the right edge
-    } else if (edgeChoice === 2) {
+      this.y = random(0, windowHeight)
+    } else if (edgeChoice == 2) {
       // Spawn on the top edge
-      this.x = random(0, windowWidth) // Random x position along the top edge
+      this.x = random(0, windowWidth)
       this.y = 0
     } else {
       // Spawn on the bottom edge
-      this.x = random(0, windowWidth) // Random x position along the bottom edge
+      this.x = random(0, windowWidth)
       this.y = windowHeight
     }
 		
@@ -619,19 +619,19 @@ class MovingShape {
 
 function updateShapes() {
   let now = millis()
-	let millisecondsSinceLastTimeSpawn = now - lastSpawnTime
+	let millisecondsSinceLastTimeSpawn = now - lastTimeSpawn
   // Spawn a new shape at random intervals
   if (millisecondsSinceLastTimeSpawn > spawnRate) {
-    movingShapes.push(new MovingShape())
-    lastSpawnTime = now
+    projectiles.push(new projectile())
+    lastTimeSpawn = now
   }
 
   // Update and display the shapes, removing those that go off-screen
-  for (let i = 0; i < movingShapes.length; i++) {
-		movingShapes[i].update()
-    let shape = movingShapes[i]
+  for (let i = 0; i < projectiles.length; i++) {
+		projectiles[i].update()
+    let shape = projectiles[i]
     if (shape.update()) {
-      movingShapes.splice(i, 1) // Remove the shape if it goes off-screen
+      projectiles.splice(i, 1) // Remove the shape if it goes off-screen
     } else {
       shape.display()
     }
