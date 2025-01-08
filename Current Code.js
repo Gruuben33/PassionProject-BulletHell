@@ -22,6 +22,7 @@ function setup() {
 	createCanvas(windowWidth, windowHeight)
 	background('grey')
 	rectMode(CENTER)
+	// frameRate(60)
 
 	playerSelectCalculations()
 	menuCalculations()
@@ -30,7 +31,7 @@ function setup() {
 }
 
 function draw() {
-	clear()
+	background('grey')
 	textAlign(CENTER)
 	textSize(mainTextSize)
 	handleState()
@@ -57,14 +58,14 @@ function mouseClicked() {
 	}
 
 	// Select projectile speed buttons in menu
-	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && currentState == menuState) {
+	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && projectileSpeedMultiplier < 30 && currentState == menuState) {
 		projectileSpeedMultiplier += 1
 	} else if (mouseX <= menuMinusButtonX + menuBoardButtonClickSize && mouseX >= menuMinusButtonX - menuBoardButtonClickSize && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && projectileSpeedMultiplier > 1 && currentState == menuState) {
 		projectileSpeedMultiplier -= 1
 	}
 
 	// Select projectile size buttons in menu
-	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && currentState == menuState) {
+	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && projectileSizeMultiplier < 30 && currentState == menuState) {
 		projectileSizeMultiplier += 1
 	} else if (mouseX <= menuMinusButtonX + menuBoardButtonClickSize && mouseX >= menuMinusButtonX - menuBoardButtonClickSize && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && projectileSizeMultiplier > 1 && currentState == menuState) {
 		projectileSizeMultiplier -= 1
@@ -112,7 +113,7 @@ function changeState(newState) {
 		resetPlayers()
 		resetScore()
 		newHighScore = false
-		movingShapes = []
+		projectiles = []
 		lastSpawnTime = 0
 	}
 }
@@ -124,7 +125,7 @@ function changeStateBackward() {
 	} else {
 		resetPlayers()
 		resetScore()
-		movingShapes = []
+		projectiles = []
 		lastTimeSpawn = 0
 	}
 }
@@ -382,7 +383,7 @@ let player1Y
 let playerSize = 50
 let player1XSpeed = 0
 let player1YSpeed = 0
-let player1Speed = 5
+let playerSpeed = 5
 let playerInteractionSize
 let player1LeftSide
 let player1RightSide
@@ -415,20 +416,20 @@ function player1Movement() {
 		player1YSpeed = 0
 	}
 	if (keyIsDown(38) && player1TopSide > 0) {
-		player1YSpeed += player1Speed
+		player1YSpeed += playerSpeed
 	}
 	if (keyIsDown(40) && player1BottomSide < windowHeight) {
-		player1YSpeed += -player1Speed
+		player1YSpeed += -playerSpeed
 	}
 	// Keys: ← & →
 	if (player1XSpeed != 0) {
 		player1XSpeed = 0
 	}
 	if (keyIsDown(37) && player1LeftSide > 0) {
-		player1XSpeed += 5
+		player1XSpeed += playerSpeed
 	}
 	if (keyIsDown(39) && player1RightSide < windowWidth) {
-		player1XSpeed += -5
+		player1XSpeed += -playerSpeed
 	}
 }
 
@@ -464,6 +465,16 @@ function updateTime() {
 	if (millisecondsSinceLastTimeScore > 10) {
 		currentScore += 1
 		lastTimeScore = now
+	}
+	if (currentScore % 500 == 0) {
+		playerSpeed += 1
+		projectileSpeed += 0.1
+		spawnRate -= 2
+	}
+	else if (currentScore < 500) {
+		playerSpeed = 5
+		projectileSpeed = 1
+		spawnRate = 60
 	}
 }
 
@@ -549,7 +560,8 @@ function gameOverDisplay() {
 let projectiles = [] // Array to hold all the shapes
 let spawnRate = 60 // Frames between spawning new shapes (1 shape every 60 frames)
 let lastTimeSpawn = 0
-let projectileSize = 20
+let projectileSize = 15
+let projectileSpeed = 1
 
 class projectile {
   constructor() {
@@ -588,19 +600,19 @@ class projectile {
     this.targetY = this.centerY + sin(angle) * radius
 
     // Define speed of the shape (adjustable)
-    this.speed = 2
+    this.speed = projectileSpeed * projectileSpeedMultiplier
     
     // Calculate the initial angle towards the target position
     this.angle = atan2(this.targetY - this.centerY, this.targetX - this.centerX)
 		
     this.size = projectileSize * projectileSizeMultiplier
-    this.color = color(random(255), random(255), random(255))
+    this.color = color('red')
   }
   
   update() {
     // Update position based on the angle
-    this.x += this.speed * cos(this.angle);
-    this.y += this.speed * sin(this.angle);
+    this.x += this.speed * cos(this.angle)
+    this.y += this.speed * sin(this.angle)
     
     // If the shape goes off-screen, we remove it later
     if (this.x < 0 || this.x > windowWidth || this.y < 0 || this.y > windowHeight) {
@@ -609,7 +621,7 @@ class projectile {
     return false
   }
   
-  display() {
+  draw() {
     // Draw the shape with its color
     fill(this.color)
     noStroke()
@@ -633,7 +645,7 @@ function updateShapes() {
     if (shape.update()) {
       projectiles.splice(i, 1) // Remove the shape if it goes off-screen
     } else {
-      shape.display()
+      shape.draw()
     }
   }
 }
