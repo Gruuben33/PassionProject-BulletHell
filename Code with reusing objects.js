@@ -22,7 +22,7 @@ function setup() {
 	createCanvas(windowWidth, windowHeight)
 	background('grey')
 	rectMode(CENTER)
-	frameRate(60)
+	// frameRate()
 
 	playerSelectCalculations()
 	menuCalculations()
@@ -377,6 +377,8 @@ function drawSelectScreen() {
 	text('Select the amount of players', windowWidth / 2, windowHeight / 20)
 }
 
+
+
 // Player 1 variables
 let player1X
 let player1Y
@@ -467,12 +469,12 @@ function updateTime() {
 		lastTimeScore = now
 	}
 	if (currentScore % 500 == 0) {
-		playerSpeed += 1
+		playerSpeed += 0.1
 		projectileSpeed += 0.1
 	}
 	else if (currentScore < 500) {
 		playerSpeed = 5
-		projectileSpeed = 1
+		projectileSpeed = startingProjectileSpeed
 	}
 }
 
@@ -559,8 +561,10 @@ let projectiles = [] // Array to hold all the shapes
 let spawnRate = 500 // Frames between spawning new shapes
 let lastTimeSpawn = 0
 let projectileSize = 15
-let projectileSpeed = 1
-let maxSpawn = 100
+let startingProjectileSpeed = 1
+let projectileSpeed = startingProjectileSpeed
+let maxSpawn = 50
+let playerHitbox = playerSize
 
 class projectile {
   constructor() {
@@ -589,7 +593,7 @@ class projectile {
     this.centerY = windowHeight / 2
     
     // Define the radius of the circle within which the shape will move
-    this.targetRadius = 200 // You can change this value to control the size of the circular range
+    this.targetRadius = 100 // You can change this value to control the size of the circular range
     
     // Randomly choose a target position within the circle around the center
     let angle = random(TWO_PI) // Random angle between 0 and 2*PI
@@ -627,20 +631,20 @@ class projectile {
     const edgeChoice = Math.floor(Math.random() * 4) // Random number between 0 and 3
     if (edgeChoice == 0) {
       // Spawn on the left edge
-      this.x = 0
+      this.x = 0 - this.size
       this.y = random(0, windowHeight)
     } else if (edgeChoice == 1) {
       // Spawn on the right edge
-      this.x = windowWidth
+      this.x = windowWidth + this.size
       this.y = random(0, windowHeight)
     } else if (edgeChoice == 2) {
       // Spawn on the top edge
       this.x = random(0, windowWidth)
-      this.y = 0
+      this.y = 0 - this.size
     } else {
       // Spawn on the bottom edge
       this.x = random(0, windowWidth)
-      this.y = windowHeight
+      this.y = windowHeight + this.size
     }
 
     // Reset target position and speed
@@ -652,6 +656,7 @@ class projectile {
 
     // Reset speed and angle towards the target
     this.speed = projectileSpeed * projectileSpeedMultiplier
+		this.size = projectileSize * projectileSpeedMultiplier
     this.angle = atan2(this.targetY - this.centerY, this.targetX - this.centerX)
     this.active = true
   }
@@ -662,6 +667,12 @@ class projectile {
     noStroke()
     ellipse(this.x, this.y, this.size, this.size)
   }
+	
+	projectileCollision() {
+		if (this.x) {
+			
+		}
+	}
 }
 
 function updateShapes() {
