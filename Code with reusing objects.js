@@ -18,6 +18,7 @@ function resetPlayers() {
 }
 
 function resetScore() {
+		lastScore = currentScore
 		currentScore = 0
 }
 
@@ -119,6 +120,7 @@ function changeState(newState) {
 		projectiles = []
 		lastSpawnTime = 0
 		player1Lives = 3
+		player2Lives = 3
 	}
 }
 
@@ -132,6 +134,7 @@ function changeStateBackward() {
 		projectiles = []
 		lastTimeSpawn = 0
 		player1Lives = 3
+		player2Lives = 3
 	}
 }
 
@@ -160,7 +163,7 @@ function handleState() {
 			updateShapes()
 			updateTime()
 			gameOverTest()
-			gameOver()
+			// gameOver()
 			drawMenuButton()
 			drawPlayer1Display()
 			if (player1Lives > 0) {
@@ -415,8 +418,13 @@ let playerLivesX
 let player1LivesY
 
 function player1Calculations() {
-	player1X = windowWidth / 2
-	player1Y = windowHeight / 2
+	if (currentState == player1Play) {
+		player1X = windowWidth / 2
+		player1Y = windowHeight / 2
+	} else {
+		player1X = windowWidth / 2 - playerSize * 1.5
+		player1Y = windowHeight / 2
+	}
 	playerInteractionSize = playerSize / 2
 	playerScoreY = windowHeight - 60
 	playerHighScoreY = windowHeight - 30
@@ -460,7 +468,7 @@ function updatePlayer1Variables() {
 	player1RightSide = player1X + playerInteractionSize
 	player1BottomSide = player1Y + playerInteractionSize
 	player1TopSide = player1Y - playerInteractionSize
-	lastScore = currentScore
+	// lastScore = currentScore
 }
 
 function drawPlayer1Display() {
@@ -491,7 +499,7 @@ let player2topSide
 let player2LivesY
 
 function player2Calculations() {
-	player2X = windowWidth / 2
+	player2X = windowWidth / 2 + playerSize * 1.5
 	player2Y = windowHeight / 2
 	player2LivesY = windowHeight - mainTextSize * 2
 }
@@ -532,7 +540,7 @@ function updatePlayer2Variables() {
 	player2RightSide = player2X + playerInteractionSize
 	player2BottomSide = player2Y + playerInteractionSize
 	player2TopSide = player2Y - playerInteractionSize
-	lastScore = currentScore
+	// lastScore = currentScore
 }
 
 function drawPlayer2Display() {
