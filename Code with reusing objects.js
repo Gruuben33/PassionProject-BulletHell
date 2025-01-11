@@ -8,10 +8,13 @@ let now
 let lastTimeScore = 0
 let millisecondsSinceLastTimeScore
 let player1Lives = 3
+let player2Lives = 3
+let godMode = false
 
 // Misc. functions
 function resetPlayers() {
 	player1Calculations()
+	player2Calculations()
 }
 
 function resetScore() {
@@ -27,6 +30,7 @@ function setup() {
 	playerSelectCalculations()
 	menuCalculations()
 	player1Calculations()
+	player2Calculations()
 	gameOverCalculations()
 }
 
@@ -82,7 +86,7 @@ function mouseClicked() {
 
 	// Select retry button in 'game over'
 	if (mouseX <= textX + retryButtonClickWidth && mouseX >= textX - retryButtonClickWidth && mouseY <= retryButtonY + retryButtonClickHeight && mouseY >= retryButtonY - retryButtonClickHeight && currentState == gameOverState) {
-		changeState(player1Play)
+		changeStateBackward()
 	}
 
 	// Select player select button in 'game over'
@@ -107,14 +111,14 @@ function changeState(newState) {
 	currentState = newState
 	if (newState == menuState) {
 		pause = true
-	} 
-	else if (newState != menuState){
+	} else if (newState != menuState) {
 		pause = false
 		resetPlayers()
 		resetScore()
 		newHighScore = false
 		projectiles = []
 		lastSpawnTime = 0
+		player1Lives = 3
 	}
 }
 
@@ -127,6 +131,7 @@ function changeStateBackward() {
 		resetScore()
 		projectiles = []
 		lastTimeSpawn = 0
+		player1Lives = 3
 	}
 }
 
@@ -141,24 +146,39 @@ function handleState() {
 			drawMenuScreen()
 			break
 		case player1Play:
-			updatePlayer1Variables()
 			player1Movement()
-			updateTime()
-			gameOverTest()
+			updatePlayer1Variables()
 			updateShapes()
+			updateTime()
+			// gameOverTest()
+			gameOver()
+			drawMenuButton()
 			drawPlayer1Display()
 			drawPlayer1()
-			drawMenuButton()
 			break
 		case player2Play:
-			updatePlayer1Variables()
-			player1Movement()
+			updateShapes()
 			updateTime()
 			gameOverTest()
-			updateShapes()
-			drawPlayer1Display()
-			drawPlayer1()
+			gameOver()
 			drawMenuButton()
+			drawPlayer1Display()
+			if (player1Lives > 0) {
+				player1Movement()
+				updatePlayer1Variables()
+				drawPlayer1()
+			} else {
+				player1X = -100
+				player1Y = -100
+			}
+			if (player2Lives > 0) {
+				player2Movement()
+				updatePlayer2Variables()
+				drawPlayer2()
+			} else {
+				player2X = -100
+				player2Y = -100
+			}
 			break
 		case gameOverState:
 			drawMenuButton()
@@ -377,8 +397,6 @@ function drawSelectScreen() {
 	text('Select the amount of players', windowWidth / 2, windowHeight / 20)
 }
 
-
-
 // Player 1 variables
 let player1X
 let player1Y
@@ -461,6 +479,69 @@ function gameOverTest() {
 	}
 }
 
+// Player 2 variables
+let player2X
+let player2Y
+let player2XSpeed = 0
+let player2YSpeed = 0
+let player2LeftSide
+let player2RightSide
+let player2BottomSide
+let player2topSide
+let player2LivesY
+
+function player2Calculations() {
+	player2X = windowWidth / 2
+	player2Y = windowHeight / 2
+	player2LivesY = windowHeight - mainTextSize * 2
+}
+
+function drawPlayer2() {
+	fill('blue')
+	noStroke()
+	square(player2X, player2Y, playerSize)
+}
+
+function player2Movement() {
+	// Keys: W & S
+	if (player2YSpeed != 0) {
+		player2YSpeed = 0
+	}
+	if (keyIsDown(87) && player2TopSide > 0) {
+		player2YSpeed += playerSpeed
+	}
+	if (keyIsDown(83) && player2BottomSide < windowHeight) {
+		player2YSpeed += -playerSpeed
+	}
+	// Keys: D & A
+	if (player2XSpeed != 0) {
+		player2XSpeed = 0
+	}
+	if (keyIsDown(65) && player2LeftSide > 0) {
+		player2XSpeed += playerSpeed
+	}
+	if (keyIsDown(68) && player2RightSide < windowWidth) {
+		player2XSpeed += -playerSpeed
+	}
+}
+
+function updatePlayer2Variables() {
+	player2X -= player2XSpeed
+	player2Y -= player2YSpeed
+	player2LeftSide = player2X - playerInteractionSize
+	player2RightSide = player2X + playerInteractionSize
+	player2BottomSide = player2Y + playerInteractionSize
+	player2TopSide = player2Y - playerInteractionSize
+	lastScore = currentScore
+}
+
+function drawPlayer2Display() {
+	noStroke()
+	fill('white')
+	textAlign(RIGHT)
+	text(`P2 Lives: ${player2Lives}`, playerLivesX, player2LivesY)
+}
+
 function updateTime() {
 	now = millis()
 	millisecondsSinceLastTimeScore = now - lastTimeScore
@@ -501,6 +582,15 @@ let playerSelectButtonClickHeight
 // Retry button text X Y && back to player select text X Y
 let retryTextY
 let playerSelectTextY
+
+function gameOver() {
+	if (currentState == player1Play && player1Lives <= 0) {
+		changeState(gameOverState)
+	}
+	else if (currentState == player2Play && player1Lives <= 0 && player2Lives <= 0) {
+		changeState(gameOverState)
+	}
+}
 
 function gameOverCalculations() {
 	// Text positions (newHighScore X Y, yourScore X Y, yourHighScore X Y)
@@ -563,8 +653,9 @@ let lastTimeSpawn = 0
 let projectileSize = 15
 let startingProjectileSpeed = 1
 let projectileSpeed = startingProjectileSpeed
-let maxSpawn = 50
-let playerHitbox = playerSize
+let maxSpawn = 30
+let playerR = playerSize - 60
+let shape
 
 class projectile {
   constructor() {
@@ -608,7 +699,7 @@ class projectile {
     // Calculate the initial angle towards the target position
     this.angle = atan2(this.targetY - this.centerY, this.targetX - this.centerX)
     
-    this.size = projectileSize * projectileSizeMultiplier
+    this.radius = projectileSize * projectileSizeMultiplier
     this.color = color('red')
     this.active = true
   }
@@ -620,7 +711,7 @@ class projectile {
       this.y += this.speed * sin(this.angle)
     }
     // Check if the shape is off-screen
-    if (this.x + this.size < 0 || this.x - this.size > windowWidth || this.y + this.size < 0 || this.y - this.size > windowHeight) {
+    if (this.x + this.radius < 0 || this.x - this.radius > windowWidth || this.y + this.radius < 0 || this.y - this.radius > windowHeight) {
       return true // This indicates the shape has gone off-screen and needs to be reset
     }
     return false
@@ -631,20 +722,20 @@ class projectile {
     const edgeChoice = Math.floor(Math.random() * 4) // Random number between 0 and 3
     if (edgeChoice == 0) {
       // Spawn on the left edge
-      this.x = 0 - this.size
+      this.x = 0 - this.radius
       this.y = random(0, windowHeight)
     } else if (edgeChoice == 1) {
       // Spawn on the right edge
-      this.x = windowWidth + this.size
+      this.x = windowWidth + this.radius
       this.y = random(0, windowHeight)
     } else if (edgeChoice == 2) {
       // Spawn on the top edge
       this.x = random(0, windowWidth)
-      this.y = 0 - this.size
+      this.y = 0 - this.radius
     } else {
       // Spawn on the bottom edge
       this.x = random(0, windowWidth)
-      this.y = windowHeight + this.size
+      this.y = windowHeight + this.radius
     }
 
     // Reset target position and speed
@@ -656,7 +747,7 @@ class projectile {
 
     // Reset speed and angle towards the target
     this.speed = projectileSpeed * projectileSpeedMultiplier
-		this.size = projectileSize * projectileSpeedMultiplier
+		this.radius = projectileSize * projectileSpeedMultiplier
     this.angle = atan2(this.targetY - this.centerY, this.targetX - this.centerX)
     this.active = true
   }
@@ -665,12 +756,31 @@ class projectile {
     // Draw the shape with its color
     fill(this.color)
     noStroke()
-    ellipse(this.x, this.y, this.size, this.size)
+    ellipse(this.x, this.y, this.radius, this.radius)
   }
 	
-	projectileCollision() {
-		if (this.x) {
-			
+	checkPlayer1Collision() {
+		if (currentState == player1Play || currentState == player2Play) {
+			let targetDistance = playerR + this.radius
+			let v1 = createVector(player1X, player1Y)
+			let v3 = createVector(this.x, this.y)
+			let distance1 = v1.dist(v3)
+			if (distance1 <= targetDistance) {
+				return true
+			}
+			return false
+		}
+	}
+	checkPlayer2Collision() {
+		if (currentState == player2Play) {
+			let targetDistance = playerR + this.radius
+			let v2 = createVector(player2X, player2Y)
+			let v3 = createVector(this.x, this.y)
+			let distance2 = v2.dist(v3)
+			if (distance2 <= targetDistance) {
+				return true
+			}
+			return false
 		}
 	}
 }
@@ -684,12 +794,20 @@ function updateShapes() {
     lastTimeSpawn = now
   }
 
-  // Update and display the shapes, removing those that go off-screen and respawning them
+  // Update and display the shapes, those that go off-screen get new positions
   for (let i = 0; i < projectiles.length; i++) {
-    let shape = projectiles[i]
+    shape = projectiles[i]
     if (shape.update()) {
       shape.resetPosition() // Reset position if the shape goes off-screen
     }
+		if (shape.checkPlayer1Collision() && godMode == false) {
+			player1Lives -= 1
+			shape.resetPosition() // Reset position if the shape goes off-screen
+		}
+		if (shape.checkPlayer2Collision() && godMode == false) {
+			player2Lives -= 1
+			shape.resetPosition() // Reset position if the shape goes off-screen
+		}
     shape.draw()
   }
 }
