@@ -755,7 +755,7 @@ class projectile {
 
     // Reset speed and angle towards the target
     this.speed = projectileSpeed * projectileSpeedMultiplier
-		this.radius = projectileSize * projectileSpeedMultiplier
+		this.radius = projectileSize * projectileSizeMultiplier
     this.angle = atan2(this.targetY - this.centerY, this.targetX - this.centerX)
     this.active = true
   }
