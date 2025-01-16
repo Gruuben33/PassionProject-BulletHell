@@ -64,20 +64,27 @@ function mouseClicked() {
 	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && projectileSpeedMultiplier < 30 && currentState == menuState) {
 		projectileSpeedMultiplier += 1
 		playerSpeedButton += 0.5
+		speedScoreMultiplier += 1
 	} else if (mouseX <= menuMinusButtonX + menuBoardButtonClickSize && mouseX >= menuMinusButtonX - menuBoardButtonClickSize && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && projectileSpeedMultiplier > 1 && currentState == menuState) {
 		projectileSpeedMultiplier -= 1
 		playerSpeedButton -= 0.5
+		speedScoreMultiplier -= 1
 	} else if (mouseX <= menuResetButtonX + menuResetButtonClickWidth && mouseX >= menuResetButtonX - menuResetButtonClickWidth && mouseY <= menuSpeedButtonY + menuBoardButtonClickSize && mouseY >= menuSpeedButtonY - menuBoardButtonClickSize && currentState == menuState) {
 		projectileSpeedMultiplier = 5
+		speedScoreMultiplier = 5
+		playerSpeedButton = 0
 	}
 
 	// Select projectile size buttons in menu
 	if (mouseX <= menuPlusButtonX + menuBoardButtonClickSize && mouseX >= menuPlusButtonX - menuBoardButtonClickSize && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && projectileSizeMultiplier < 30 && currentState == menuState) {
 		projectileSizeMultiplier += 1
+		sizeScoreMultiplier += 1
 	} else if (mouseX <= menuMinusButtonX + menuBoardButtonClickSize && mouseX >= menuMinusButtonX - menuBoardButtonClickSize && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && projectileSizeMultiplier > 1 && currentState == menuState) {
 		projectileSizeMultiplier -= 1
+		sizeScoreMultiplier -= 1
 	} else if (mouseX <= menuResetButtonX + menuResetButtonClickWidth && mouseX >= menuResetButtonX - menuResetButtonClickWidth && mouseY <= menuSizeButtonY + menuBoardButtonClickSize && mouseY >= menuSizeButtonY - menuBoardButtonClickSize && currentState == menuState) {
 		projectileSizeMultiplier = 5
+		sizeScoreMultiplier = 5
 	}
 
 	// Select state in menu
@@ -111,17 +118,6 @@ let previousState = selectState
 let prevPlay
 let newState
 let pause = false
-
-// function paused() {
-// 	menuTime = now
-// }
-
-// function resumeGame() {
-// 	if (currentState == player1Play) {
-// 		targetTime = immuneTime - millisecondsSinceLastTimePlayer1Hit
-// 		lastTimePlayer1Hit = now - targetTime
-// 	}
-// }
 
 function openMenu() {
 	previousState = currentState
@@ -183,11 +179,9 @@ function handleState() {
 		case menuState:
 			drawMenuButton()
 			drawMenuScreen()
-			// paused()
-			// pauseImmunity()
+			updateTime()
 			break
 		case player1Play:
-			// checkPlayer1Immunity()
 			player1Movement()
 			updatePlayer1Variables()
 			updateShapes()
@@ -197,7 +191,6 @@ function handleState() {
 			drawMenuButton()
 			drawPlayer1Display()
 			drawPlayer1()
-			// print(millisecondsSinceLastTimePlayer1Hit)
 			break
 		case player2Play:
 			updateShapes()
@@ -602,9 +595,20 @@ function drawPlayer2Display() {
 	text(`P2 Lives: ${player2Lives}`, playerLivesX, player2LivesY)
 }
 
+// Global to page
 let now
+
+// Score
+let speedScoreMultiplier = 5
+let sizeScoreMultiplier = 5
 let lastTimeScore = 0
 let millisecondsSinceLastTimeScore
+
+// Difficulty
+let lastTimeDifficulty = 0
+let millisecondsSinceLastTimeDifficulty
+
+// Immunity
 let lastTimePlayer1Hit
 let millisecondsSinceLastTimePlayer1Hit
 let lastTimePlayer2Hit
@@ -619,46 +623,38 @@ let player2Immunity = false
 
 function updateTime() {
 	now = millis()
-	updateScore()
-	updateGameDifficulty()
-	checkImmuneTime()
-}
-
-function checkImmuneTime() {
 	if (currentState != menuState) {
-		millisecondsSinceLastTimePlayer1Hit = now - lastTimePlayer1Hit
-		millisecondsSinceLastTimePlayer2Hit = now - lastTimePlayer2Hit
-		if (millisecondsSinceLastTimePlayer1Hit < immuneTime) {
-			player1Immunity = true
-		} else {
-			player1Immunity = false
-		}
-		if (millisecondsSinceLastTimePlayer2Hit < immuneTime) {
-			player2Immunity = true
-		} else {
-			player2Immunity = false
-		}
+		updateScore()
+		updateGameDifficulty()
+		checkImmuneTime()
 	}
 }
 
-// function pauseImmunity() {
-// 	millisecondsSinceLastTimePlayer1Hit = now - lastTimePlayer1Hit
-// 	// millisecondsSinceLastTimePlayer2Hit = now - lastTimePlayer2Hit
-// 	lastTimePlayer1HitExtention = millisecondsSinceLastTimePlayer1Hit
-// }
+function checkImmuneTime() {
+		millisecondsSinceLastTimePlayer1Hit = now - lastTimePlayer1Hit
+		millisecondsSinceLastTimePlayer2Hit = now - lastTimePlayer2Hit
+		player1Immunity = millisecondsSinceLastTimePlayer1Hit < immuneTime
+		player2Immunity = millisecondsSinceLastTimePlayer2Hit < immuneTime
+}
 
 function updateScore() {
 	millisecondsSinceLastTimeScore = now - lastTimeScore
 	if (millisecondsSinceLastTimeScore > 10) {
-		currentScore += 1
+		if (currentState == player2Play) {
+			currentScore += Math.round(1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2) / 6)
+} else {
+			currentScore += 1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2)
+}
 		lastTimeScore = now
 	}
 }
 
 function updateGameDifficulty() {
-	if (currentScore % 500 == 0) {
+	millisecondsSinceLastTimeDifficulty = now - lastTimeDifficulty
+	if (millisecondsSinceLastTimeDifficulty > 5000) {
 		playerSpeed += 0.5
 		projectileSpeed += 0.25
+		lastTimeDifficulty = now
 	} else if (currentScore < 500) {
 		playerSpeed = 5
 		projectileSpeed = startingProjectileSpeed
