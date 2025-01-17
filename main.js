@@ -20,6 +20,13 @@ function resetGame() {
 	newHighScore = false
 }
 
+function preload() {
+	elmoScream = loadSound("ElmoTheOne.mp4")
+	playerDieNoise = loadSound("Player Die Noise.mp3")
+	gameOverNoise = loadSound("Game Over Noise.mp3")
+	newHighScoreNoise = loadSound("New Record Noise.mp3")
+}
+
 function setup() {
 	createCanvas(windowWidth, windowHeight)
 	background('grey')
@@ -154,6 +161,11 @@ function changeState(newState) {
 	currentState = newState
 	setPrevPlay()
 	resetGame()
+	if (newState == gameOverState && lastScore <= highScore) {
+		handleSound(gameOverSound)
+	} else if (newState == gameOverState && lastScore > highScore) {
+		handleSound(newHighScoreNoise)
+	}
 }
 
 function changeStateBackward() {
@@ -186,7 +198,7 @@ function handleState() {
 			updatePlayer1Variables()
 			updateShapes()
 			updateTime()
-			gameOverTest()
+			// gameOverTest()
 			gameOver()
 			drawMenuButton()
 			drawPlayer1Display()
@@ -617,7 +629,7 @@ let lastTimePlayer1HitExtention
 let menuOpenTime
 let menuCloseTime
 let menuDuration = 0
-let immuneTime = 2500
+let immuneTime = 3500
 let player1Immunity = false
 let player2Immunity = false
 
@@ -643,7 +655,7 @@ function updateScore() {
 		if (currentState == player2Play) {
 			currentScore += Math.round(1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2) / 6)
 } else {
-			currentScore += 1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2)
+			currentScore += Math.round(1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2))
 }
 		lastTimeScore = now
 	}
@@ -690,17 +702,21 @@ function playersDie() {
 		player1Movement()
 		updatePlayer1Variables()
 		drawPlayer1()
-	} else {
+	} else if (player1Lives == 0) {
 		player1X = -100
 		player1Y = -100
+		handleSound(playerDieSound)
+		player1Lives -= 1
 	}
 	if (player2Lives > 0) {
 		player2Movement()
 		updatePlayer2Variables()
 		drawPlayer2()
-	} else {
+	} else if (player2Lives == 0) {
 		player2X = -100
 		player2Y = -100
+		handleSound(playerDieSound)
+		player2Lives -= 1
 	}
 }
 
@@ -771,7 +787,7 @@ let projectiles = [] // Array to hold all the shapes
 let spawnRate = 500 // Frames between spawning new shapes
 let lastTimeSpawn = 0
 let projectileSize = 10
-let startingProjectileSpeed = 1
+let startingProjectileSpeed = 2
 let projectileSpeed = startingProjectileSpeed
 let maxSpawn = 30
 let playerR = playerSize / 2
@@ -924,6 +940,7 @@ function updateShapes() {
 			player1Lives -= 1
 			shape.resetPosition() // Reset position if the shape goes off-screen
 			lastTimePlayer1Hit = now
+			handleSound(playerHitSound)
 		}
 		if (shape.checkPlayer2Collision() && godMode == false && player2Immunity == false) {
 			player2Lives -= 1
@@ -931,5 +948,39 @@ function updateShapes() {
 			lastTimePlayer2Hit = now
 		}
 		shape.draw()
+	}
+}
+
+let playerHitSound = 0
+let playerDieSound = 1
+let gameOverSound = 2
+let newHighScoreNoise = 3
+let sound
+
+function handleSound(sound) {
+	switch (sound) {
+		case playerHitSound:
+			playerDieNoise.stop()
+			gameOverNoise.stop()
+			newHighScoreNoise.stop()
+			elmoScream.play()
+			break
+		case playerDieSound: 
+			elmoScream.stop()
+			gameOverNoise.stop()
+			newHighScoreNoise.stop()
+			playerDieNoise.play()
+			break
+		case gameOverSound:
+			elmoScream.stop()
+			playerDieNoise.stop()
+			newHighScoreNoise.stop()
+			gameOverNoise.play()
+			break
+		case newHighScoreNoise:
+			elmoScream.stop()
+			playerDieNoise.stop()
+			gameOverNoise.stop()
+			newHighScoreNoise.play()
 	}
 }
