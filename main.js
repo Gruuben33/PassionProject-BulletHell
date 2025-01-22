@@ -1,12 +1,24 @@
+// Scores list
+let highScores = []
+let n
+
 // Misc.
 let mainTextSize = 30
 let highScore = 0
 let newHighScore = false
 let lastScore = 0
 let currentScore = 0
-let player1Lives = 3
-let player2Lives = 3
 let godMode = false
+
+function addToList() {
+	highScores.push(lastScore)
+	sortedScores = sort(highScores, highScores.length)
+	reverse(sortedScores)
+	if (sortedScores.length <= 10) {
+		n = sortedScores.length
+	}
+}
+
 
 function resetGame() {
 	player1Calculations()
@@ -18,6 +30,14 @@ function resetGame() {
 	player2Lives = 3
 	lastSpawnTime = 0
 	newHighScore = false
+	player1ShakeAmount = 0
+	player2ShakeAmount = 0
+	addToList()
+}
+
+function resetText() {
+	textAlign(CENTER)
+	textSize(mainTextSize)
 }
 
 function preload() {
@@ -42,8 +62,7 @@ function setup() {
 
 function draw() {
 	background('grey')
-	textAlign(CENTER)
-	textSize(mainTextSize)
+	resetText()
 	handleState()
 }
 
@@ -135,11 +154,11 @@ function openMenu() {
 function closeMenu() {
 	currentState = previousState
 	menuCloseTime = now
-	
+
 	// Extend the immunity time by the duration the menu was open
-  menuDuration = menuCloseTime - menuOpenTime
-  lastTimePlayer1Hit += menuDuration
-  lastTimePlayer2Hit += menuDuration
+	menuDuration = menuCloseTime - menuOpenTime
+	lastTimePlayer1Hit += menuDuration
+	lastTimePlayer2Hit += menuDuration
 }
 
 function setPrevPlay() {
@@ -202,7 +221,7 @@ function handleState() {
 			gameOver()
 			drawMenuButton()
 			drawPlayer1Display()
-			drawPlayer1()
+			drawPlayer1Shake()
 			break
 		case player2Play:
 			updateShapes()
@@ -298,7 +317,7 @@ function menuCalculations() {
 
 	// "Reset" button width
 	menuResetButtonWidth = menuBoardButtonSize * 2.5
-	
+
 	// Top half button text
 	menuSpeedButtonTextY = menuSpeedButtonY + mainTextSize / 3
 	menuSizeButtonTextY = menuSizeButtonY + mainTextSize / 3
@@ -461,6 +480,11 @@ let playerScoreY
 let playerLivesX
 let player1LivesY
 let playerSpeedButton = 0
+let player1Lives = 3
+
+// player 1 hit variables
+let player1ShakeAmount = 0
+let player1Translated = false
 
 function player1Calculations() {
 	if (currentState == player1Play) {
@@ -477,6 +501,13 @@ function player1Calculations() {
 	player1LivesY = windowHeight / 15
 }
 
+function player1Hit() {
+	player1Lives -= 1
+	lastTimePlayer1Hit = now
+	player1ShakeAmount = 80
+	handleSound(playerHitSound)
+}
+
 function drawPlayer1() {
 	if (player1Immunity == false) {
 		fill('skyblue')
@@ -487,6 +518,23 @@ function drawPlayer1() {
 		noStroke()
 		square(player1X, player1Y, playerSize)
 	}
+}
+
+function drawPlayer1Shake() {
+	push()
+	if (player1ShakeAmount > 0) {
+		if (!player1Translated) {
+			translate(-player1ShakeAmount, 0)
+			player1Translated = true
+			player1ShakeAmount -= 1
+		} else if (player1Translated) {
+			translate(player1ShakeAmount, 0)
+			player1Translated = false
+			player1ShakeAmount -= 1
+		}
+	}
+	drawPlayer1()
+	pop()
 }
 
 function player1Movement() {
@@ -548,11 +596,23 @@ let player2RightSide
 let player2BottomSide
 let player2topSide
 let player2LivesY
+let player2Lives = 3
+
+// player 2 hit variables
+let player2ShakeAmount = 0
+let player2Translated = false
 
 function player2Calculations() {
 	player2X = windowWidth / 2 + playerSize * 1.5
 	player2Y = windowHeight / 2
 	player2LivesY = windowHeight - mainTextSize
+}
+
+function player2Hit() {
+	player2Lives -= 1
+	lastTimePlayer2Hit = now
+	player2ShakeAmount = 80
+	handleSound(playerHitSound)
 }
 
 function drawPlayer2() {
@@ -565,6 +625,23 @@ function drawPlayer2() {
 		noStroke()
 		square(player2X, player2Y, playerSize)
 	}
+}
+
+function drawPlayer2Shake() {
+	push()
+	if (player2ShakeAmount > 0) {
+		if (!player2Translated) {
+			translate(-player2ShakeAmount, 0)
+			player2Translated = true
+			player2ShakeAmount -= 1
+		} else if (player2Translated) {
+			translate(player2ShakeAmount, 0)
+			player2Translated = false
+			player2ShakeAmount -= 1
+		}
+	}
+	drawPlayer2()
+	pop()
 }
 
 function player2Movement() {
@@ -620,7 +697,7 @@ let millisecondsSinceLastTimeScore
 let lastTimeDifficulty = 0
 let millisecondsSinceLastTimeDifficulty
 
-// Immunity
+// Player hit
 let lastTimePlayer1Hit
 let millisecondsSinceLastTimePlayer1Hit
 let lastTimePlayer2Hit
@@ -632,6 +709,7 @@ let menuDuration = 0
 let immuneTime = 3500
 let player1Immunity = false
 let player2Immunity = false
+let player1Shake = false
 
 function updateTime() {
 	now = millis()
@@ -639,6 +717,13 @@ function updateTime() {
 		updateScore()
 		updateGameDifficulty()
 		checkImmuneTime()
+		checkShakeTime()
+	}
+}
+
+function checkShakeTime() {
+	if (player1Shake) {
+		print('Hi')
 	}
 }
 
@@ -653,7 +738,7 @@ function updateScore() {
 	millisecondsSinceLastTimeScore = now - lastTimeScore
 	if (millisecondsSinceLastTimeScore > 10) {
 		if (currentState == player2Play) {
-			currentScore += Math.round(1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2) / 6)
+			currentScore += Math.round(1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2) / 2)
 } else {
 			currentScore += Math.round(1 * (speedScoreMultiplier / 2 + sizeScoreMultiplier / 2))
 }
@@ -663,7 +748,7 @@ function updateScore() {
 
 function updateGameDifficulty() {
 	millisecondsSinceLastTimeDifficulty = now - lastTimeDifficulty
-	if (millisecondsSinceLastTimeDifficulty > 5000) {
+	if (millisecondsSinceLastTimeDifficulty > 10000) {
 		playerSpeed += 0.5
 		projectileSpeed += 0.25
 		lastTimeDifficulty = now
@@ -701,7 +786,7 @@ function playersDie() {
 	if (player1Lives > 0) {
 		player1Movement()
 		updatePlayer1Variables()
-		drawPlayer1()
+		drawPlayer1Shake()
 	} else if (player1Lives == 0) {
 		player1X = -100
 		player1Y = -100
@@ -711,7 +796,7 @@ function playersDie() {
 	if (player2Lives > 0) {
 		player2Movement()
 		updatePlayer2Variables()
-		drawPlayer2()
+		drawPlayer2Shake()
 	} else if (player2Lives == 0) {
 		player2X = -100
 		player2Y = -100
@@ -752,6 +837,13 @@ function gameOverCalculations() {
 	retryButtonClickHeight = retryButtonHeight / 2
 	playerSelectButtonClickWidth = playerSelectButtonWidth / 2
 	playerSelectButtonClickHeight = playerSelectButtonHeight / 2
+	
+	// Score list coordinates
+	scoreListX = windowWidth / 1.25
+	scoreListY = windowHeight / 2
+	scoreListWidth = windowWidth / 4
+	scoreListHeight = windowHeight - 100
+	scoreListTextY = scoreListY - scoreListHeight / 2.5
 }
 
 function gameOverDisplay() {
@@ -780,6 +872,20 @@ function gameOverDisplay() {
 	fill('black')
 	text('Retry', textX, retryTextY)
 	text('Back to Player Select', textX, playerSelectTextY)
+	
+	// High scores list
+	fill('black')
+	stroke('white')
+	rect(scoreListX, scoreListY, scoreListWidth, scoreListHeight)
+	fill('white')
+	noStroke()
+	text('Your High Scores', scoreListX, scoreListTextY)
+	for (let i = 0; i < n; i++) {
+		let g = sortedScores[i]
+		let y = mainTextSize*8 + i*mainTextSize*2
+		text(g, scoreListX, y)
+		// print(g)
+	}
 }
 
 // class spawning variables
@@ -937,20 +1043,18 @@ function updateShapes() {
 			shape.resetPosition() // Reset position if the shape goes off-screen
 		}
 		if (shape.checkPlayer1Collision() && godMode == false && player1Immunity == false) {
-			player1Lives -= 1
 			shape.resetPosition() // Reset position if the shape goes off-screen
-			lastTimePlayer1Hit = now
-			handleSound(playerHitSound)
+			player1Hit()
 		}
 		if (shape.checkPlayer2Collision() && godMode == false && player2Immunity == false) {
-			player2Lives -= 1
 			shape.resetPosition() // Reset position if the shape goes off-screen
-			lastTimePlayer2Hit = now
+			player2Hit()
 		}
 		shape.draw()
 	}
 }
 
+// Sound variables
 let playerHitSound = 0
 let playerDieSound = 1
 let gameOverSound = 2
